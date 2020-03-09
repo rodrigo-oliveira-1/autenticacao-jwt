@@ -12,31 +12,32 @@ function readAuthorization(req, res, next) {
   next();
 }
 
-async function readToken(req, res, next) {
-  jwt.verify(req.token, process.env.JWT_SECRET_KEY, async function(
-    err,
-    decodedToken,
-  ) {
-    if (err) {
-      if (err.name === 'TokenExpiredError') {
-        new Response(res).unauthorized('Sua sessão expirou!');
-      } else {
-        new Response(res).unauthorized();
+function readToken(req, res, next) {
+  jwt.verify(req.token, process.env.JWT_SECRET_KEY, function(err, decodedToken,) {
+      if (err) {
+        if (err.name === 'TokenExpiredError') {
+          new Response(res).unauthorized('Sua sessão expirou!');
+        } else {
+          new Response(res).unauthorized("Token inválido");
+        }
+        return;
       }
-      return;
-    }
 
-    req.credenciais = decodedToken;
+      req.credenciais = decodedToken;
 
-    const usuario = await usuarioModel.findByPk(decodedToken.UsuarioId);
+      /// Aqui você buscaria o seu usuário no banco de dados com base no ID do usuario do token
+      //const usuario = await usuarioModel.findByPk(decodedToken.usuarioId);
+      const usuario = {
+        usuarioId    : 10,
+        usuarioEmail : 'user@test.com'
+      }
 
-    if (!usuario) {
-      new Response(res).unauthorized();
-      return;
-    }
-    
-    req.credenciais.usuario = usuario;
-    next();
+      if (!usuario) {
+        new Response(res).unauthorized();
+        return;
+      }
+      
+      next();
   });
 }
 
@@ -51,7 +52,7 @@ async function login(req, res){
     loginValido = usuario === usuarioExemplo && senha === senhaExemplo;
     
     if (!loginValido) {
-        new Response(res).unauthorized();
+        new Response(res).unauthorized("Usuário ou senha inválidos");
         return;
     }
 
@@ -60,7 +61,7 @@ async function login(req, res){
         usuarioEmail : usuarioExemplo
     }
     
-    jwt.sign(loginData, process.env.JWT_SECRET_KEY, { algorithm: 'RS256' }, function(err, token) {
+    jwt.sign(loginData, process.env.JWT_SECRET_KEY, async function(err, token) {
         if (err) {
             return new Response(res).preConditionFailed()    
         }

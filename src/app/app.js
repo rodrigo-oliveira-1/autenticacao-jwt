@@ -1,8 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+require('dotenv').config();
 
-const authorization = require('../security/auth');
+const authorization = require('../auth/auth');
 
 const produto = require('../modules/produto/produto.controller');
 
